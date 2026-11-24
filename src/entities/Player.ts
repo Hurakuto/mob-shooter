@@ -5,6 +5,7 @@ import Entity from './Entity.ts';
 import Health from "../components/Health.ts";
 import Movement from "../components/Movement.ts";
 import Weapon from "../components/Weapon.ts";
+import GameConstants from "../GameConstants.ts";
 
 export default class Player extends Entity {
     private readonly _bulletData: BulletData = {
@@ -89,10 +90,9 @@ export default class Player extends Entity {
             this.rotation = this._moveDirection.angle();
         }
 
-        // Stop player from going offscreen
-        const camera = this.scene.cameras.main;
-        this.x = Phaser.Math.Clamp(this.x, this.displayWidth / 2, camera.width - this.displayWidth / 2);
-        this.y = Phaser.Math.Clamp(this.y, this.displayHeight / 2, camera.height - this.displayHeight / 2);
+        // Stop player from leaving the arena
+        this.x = Phaser.Math.Clamp(this.x, this.displayWidth / 2, GameConstants.ARENA_WIDTH - this.displayWidth / 2);
+        this.y = Phaser.Math.Clamp(this.y, this.displayHeight / 2, GameConstants.ARENA_HEIGHT - this.displayHeight / 2);
 
         // Press space to shoot
         if (this._cursorKeys.space.isDown) {
