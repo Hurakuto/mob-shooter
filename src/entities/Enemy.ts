@@ -67,7 +67,7 @@ export default class Enemy extends Entity {
     }
 
     public enable(x: number, y: number) {
-        this.enableBody(true, x, y - this.displayHeight, true, true);
+        this.enableBody(true, x, y, true, true);
         this._shootTimer.reset(this._shootTimerConfig);
 
         // Restore health, in case the enemy is reused from the pool, without emitting events
@@ -95,11 +95,6 @@ export default class Enemy extends Entity {
 
     preUpdate(timeSinceLaunch: number, deltaTime: number) {
         super.preUpdate(timeSinceLaunch, deltaTime)
-
-        // Destroy entities when out of screen
-        if (this.y > this.scene.cameras.main.height + this.displayHeight) {
-            this.disable();
-        }
 
         if (!this.isTinted)
             this.getComponent(Movement)?.moveVertically(this, deltaTime);

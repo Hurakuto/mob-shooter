@@ -25,6 +25,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
     private _playerBullets: Physics.Arcade.Group;
     private _enemies: Physics.Arcade.Group;
     private _enemyBullets: Physics.Arcade.Group;
+    private readonly _spawnOffset: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
 
     constructor(scene: Scene, pluginManager: Plugins.PluginManager) {
         super(scene, pluginManager, EntityManager.PLUGIN_KEY);
@@ -67,11 +68,10 @@ export default class EntityManager extends Plugins.ScenePlugin {
 
         // Spawn enemies indefinitely
         this.scene!.time.addEvent({
-            delay: 1500,
+            delay: 500,
             callback: this.spawnEnemy,
             callbackScope: this,
-            loop: true,
-            paused: true
+            loop: true
         });
 
         console.log("[EntityManager] Enemies initialized");
@@ -110,7 +110,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
     }
 
     private spawnEnemy() {
-        if (this._enemies.countActive(true) >= 5) {
+        if (this._enemies.countActive(true) >= 50) {
             return;
         }
 
@@ -119,7 +119,12 @@ export default class EntityManager extends Plugins.ScenePlugin {
             return;
         }
 
-        enemy.enable(Phaser.Math.Between(64, this.scene!.cameras.main.width - 64), 0);
+        // Spawn on a circle around the camera view, a bit further than its corners: always outside the screen.
+        // Center on the view, not the player: at the arena edges the camera stops and the player is off-center
+        const view = this.scene!.cameras.main.worldView;
+        const spawnRadius = Phaser.Math.Distance.Between(view.centerX, view.centerY, view.right, view.top) + 128;
+        Phaser.Math.RandomXY(this._spawnOffset, spawnRadius);
+        enemy.enable(view.centerX + this._spawnOffset.x, view.centerY + this._spawnOffset.y);
 
         this.game!.events.emit(GameConstants.Events.ENEMY_SPAWNED_EVENT, enemy);
 
