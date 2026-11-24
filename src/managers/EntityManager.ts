@@ -62,7 +62,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
             defaultKey: 'sprites',
             defaultFrame: 'ufoRed',
             createCallback: (enemy) => {
-                (enemy as Enemy).init(this._enemyBullets);
+                (enemy as Enemy).init(this._enemyBullets, this._player);
             }
         });
 
@@ -80,6 +80,9 @@ export default class EntityManager extends Plugins.ScenePlugin {
     }
 
     public initGroupCollisions() {
+        // Push enemies apart so they don't stack into a single blob
+        this.scene!.physics.add.collider(this._enemies, this._enemies);
+
         this.scene!.physics.add.overlap(this._playerBullets, this._enemies, (bullet, enemy) => {
             this.scene!.registry.inc(RegistryConstants.Keys.PLAYER_SCORE);
 
