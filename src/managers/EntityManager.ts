@@ -66,6 +66,8 @@ export default class EntityManager extends Plugins.ScenePlugin {
             }
         });
 
+        this._player.setTargets(this._enemies);
+
         // Spawn enemies indefinitely
         this.scene!.time.addEvent({
             delay: 500,

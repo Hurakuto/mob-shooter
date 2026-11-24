@@ -21,6 +21,8 @@ export default class Player extends Entity {
     private _rateOfFire: number;
     private _lastShotTime: number;
     private readonly _moveDirection: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
+    private readonly _shootDirection: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
+    private _targets: Phaser.Physics.Arcade.Group;
 
     constructor(scene: Scene, x: number, y: number) {
         super(scene, x, y, 'sprites');
@@ -94,14 +96,24 @@ export default class Player extends Entity {
         this.x = Phaser.Math.Clamp(this.x, this.displayWidth / 2, GameConstants.ARENA_WIDTH - this.displayWidth / 2);
         this.y = Phaser.Math.Clamp(this.y, this.displayHeight / 2, GameConstants.ARENA_HEIGHT - this.displayHeight / 2);
 
-        // Press space to shoot
-        if (this._cursorKeys.space.isDown) {
-            if (timeSinceLaunch - this._lastShotTime > this._rateOfFire * 1000) {
-                this.getComponent(Weapon)?.shoot(this);
+        // Shoot automatically at the nearest enemy
+        if (timeSinceLaunch - this._lastShotTime > this._rateOfFire * 1000) {
+            const nearestTarget = this.findNearestTarget();
+            if (nearestTarget) {
+                this._shootDirection.set(nearestTarget.x - this.x, nearestTarget.y - this.y).normalize();
+                this.getComponent(Weapon)?.shoot(this, this._shootDirection);
                 this.scene.sound.play('sfx_laser1');
 
                 this._lastShotTime = timeSinceLaunch;
             }
         }
+    }
+
+    public setTargets(targets: Phaser.Physics.Arcade.Group) {
+        this._targets = targets;
+    }
+
+    private findNearestTarget(): Entity | null {
+        return this.scene.physics.closest(this, this._targets.getMatching('active', true)) as Entity | null;
     }
 }
