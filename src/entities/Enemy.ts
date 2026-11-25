@@ -14,10 +14,12 @@ export default class Enemy extends Entity {
     };
     private _shootTimerConfig: Phaser.Types.Time.TimerEventConfig;
     private _shootTimer: Phaser.Time.TimerEvent;
+    protected _healthValue: number = 1;
+    protected _speed: number = 0.2;
 
     public init(bulletsGroup: Phaser.Physics.Arcade.Group) {
-        this.addComponent(new Health(1, this));
-        this.addComponent(new Movement(0.2));
+        this.addComponent(new Health(this._healthValue, this));
+        this.addComponent(new Movement(this._speed));
         this.addComponent(new Weapon(bulletsGroup, this._bulletData));
 
         // Listen once per enemy, not on every enable(): pooled enemies are reused many times
