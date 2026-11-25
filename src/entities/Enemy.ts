@@ -15,17 +15,17 @@ export default class Enemy extends Entity {
     };
     private _shootTimerConfig: Phaser.Types.Time.TimerEventConfig;
     private _shootTimer: Phaser.Time.TimerEvent | undefined;
-    private _target: Entity;
-    private _health: Health | undefined;
+    protected _target: Entity;
+    protected _health: Health | undefined;
+    protected _healthValue: number;
+    protected _speed: number;
     private readonly _directionToTarget: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
 
-    public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity, health: number = 1, speed: number = 0.2, bulletDamage: number) {
+    public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity) {
         this._target = target;
 
-        this._bulletDamage = bulletDamage;
-
-        this.addComponent(new Health(health, this));
-        this.addComponent(new Movement(speed));
+        this.addComponent(new Health(this._healthValue, this));
+        this.addComponent(new Movement(this._speed));
         this.addComponent(new Weapon(bulletsGroup, this._bulletData));
         // Chasers don't shoot for now
         this.getComponent(Weapon)!.enabled = false;
