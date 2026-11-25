@@ -15,23 +15,24 @@ export default class Enemy extends Entity {
     private _shootTimerConfig: Phaser.Types.Time.TimerEventConfig;
     private _shootTimer: Phaser.Time.TimerEvent | undefined;
     private _target: Entity;
+    private _health: Health | undefined;
     private readonly _directionToTarget: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
 
-    public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity) {
+    public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity, health: number = 1, speed: number = 0.2) {
         this._target = target;
 
-        this.addComponent(new Health(1, this));
-        this.addComponent(new Movement(0.2));
+        this.addComponent(new Health(health, this));
+        this.addComponent(new Movement(speed));
         this.addComponent(new Weapon(bulletsGroup, this._bulletData));
         // Chasers don't shoot for now
         this.getComponent(Weapon)!.enabled = false;
 
         // Listen once per enemy, not on every enable(): pooled enemies are reused many times
-        const health = this.getComponent(Health);
-        health?.on(Health.CHANGE_EVENT, () => {
+        this._health = this.getComponent(Health);
+        this._health?.on(Health.CHANGE_EVENT, () => {
             this.setTintFill(0xffffff);
 
-            if (health?.current == 0)
+            if (this._health?.current == 0)
             {
                 this.disableBody();
             }
@@ -39,7 +40,7 @@ export default class Enemy extends Entity {
             this.scene.time.delayedCall(50, () => {
                 this.clearTint();
 
-                if (health?.current == 0)
+                if (this._health?.current == 0)
                 {
                     this.disable();
                 }
