@@ -5,12 +5,13 @@ import Movement from "../components/Movement.ts";
 import Weapon from "../components/Weapon.ts";
 
 export default class Enemy extends Entity {
+    private _bulletDamage: number = 1;
     private readonly _bulletData: BulletData = {
         width: 12,
         height: 12,
         color: 0xf25f5c,
         speed: 512,
-        damage: 1,
+        damage: this._bulletDamage,
     };
     private _shootTimerConfig: Phaser.Types.Time.TimerEventConfig;
     private _shootTimer: Phaser.Time.TimerEvent | undefined;
@@ -18,8 +19,10 @@ export default class Enemy extends Entity {
     private _health: Health | undefined;
     private readonly _directionToTarget: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
 
-    public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity, health: number = 1, speed: number = 0.2) {
+    public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity, health: number = 1, speed: number = 0.2, bulletDamage: number) {
         this._target = target;
+
+        this._bulletDamage = bulletDamage;
 
         this.addComponent(new Health(health, this));
         this.addComponent(new Movement(speed));
