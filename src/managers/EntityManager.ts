@@ -6,6 +6,8 @@ import Player from "../entities/Player.ts";
 import GroupUtils from "../utils/GroupUtils.ts";
 import GameConstants from "../GameConstants.ts";
 import RegistryConstants from "../RegistryConstants.ts";
+import { MovingEnemy } from "../entities/enemies/MovingEnemy.ts";
+import { BasicEnemy } from "../entities/enemies/BasicEnemy.ts";
 
 export default class EntityManager extends Plugins.ScenePlugin {
     public static readonly PLUGIN_KEY: string = 'EntityManager';
@@ -23,7 +25,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
 
     private _player: Player;
     private _playerBullets: Physics.Arcade.Group;
-    private _enemies: Physics.Arcade.Group;
+    private _enemyGroups: Physics.Arcade.Group[];
     private _enemyBullets: Physics.Arcade.Group;
 
     constructor(scene: Scene, pluginManager: Plugins.PluginManager) {
@@ -52,18 +54,14 @@ export default class EntityManager extends Plugins.ScenePlugin {
         return this._player;
     }
 
-    public initEnemies(): Physics.Arcade.Group {
+    public initEnemies(): Physics.Arcade.Group[] {
         this._enemyBullets = this.scene!.physics.add.group(this.bulletGroupConfig);
         GroupUtils.populate(256, this._enemyBullets);
 
-        this._enemies = this.scene!.physics.add.group({
-            classType: Enemy,
-            defaultKey: 'sprites',
-            defaultFrame: 'ufoRed',
-            createCallback: (enemy) => {
-                (enemy as Enemy).init(this._enemyBullets);
-            }
-        });
+        this._enemyGroups = [
+            this.createEnemyGroup(BasicEnemy, 'ufored'),
+            this.createEnemyGroup(MovingEnemy, 'playerShip2_blue')
+        ];
 
         // Spawn enemies indefinitely
         this.scene!.time.addEvent({
@@ -75,11 +73,21 @@ export default class EntityManager extends Plugins.ScenePlugin {
 
         console.log("[EntityManager] Enemies initialized");
 
-        return this._enemies;
+        return this._enemyGroups;
+    }
+    private createEnemyGroup(classType: typeof Enemy, frame: string): Physics.Arcade.Group {
+        return this.scene!.physics.add.group({
+            classType: classType,
+            defaultKey: 'sprites',
+            defaultFrame: frame,
+            createCallback: (enemy) => {
+                (enemy as Enemy).init(this._enemyBullets);
+            }
+        });
     }
 
     public initGroupCollisions() {
-        this.scene!.physics.add.overlap(this._playerBullets, this._enemies, (bullet, enemy) => {
+        this.scene!.physics.add.overlap(this._playerBullets, this._enemyGroups, (bullet, enemy) => {
             this.scene!.registry.inc(RegistryConstants.Keys.PLAYER_SCORE);
 
             (bullet as Bullet).disable();
@@ -93,7 +101,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
             this.scene?.cameras.main.shake(100, 0.01);
         });
 
-        this.scene!.physics.add.overlap(this._player, this._enemies, (player, enemy) => {
+        this.scene!.physics.add.overlap(this._player, this._enemyGroups, (player, enemy) => {
             this.scene!.registry.inc(RegistryConstants.Keys.PLAYER_SCORE);
 
             const enemyHealth = (enemy as Enemy).getComponent(Health);
@@ -109,11 +117,14 @@ export default class EntityManager extends Plugins.ScenePlugin {
     }
 
     private spawnEnemy() {
-        if (this._enemies.countActive(true) >= 5) {
+        const total = this._enemyGroups.reduce((sum, group) => sum + group.countActive(true), 0);
+        if (total >= 5) {
             return;
         }
 
-        const enemy = this._enemies.get() as Enemy;
+        const group = this._enemyGroups[Phaser.Math.Between(0, this._enemyGroups.length - 1)];
+
+        const enemy = group.get() as Enemy;
         if (!enemy) {
             return;
         }
