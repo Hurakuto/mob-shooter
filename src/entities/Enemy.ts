@@ -5,12 +5,14 @@ import Movement from "../components/Movement.ts";
 import Weapon from "../components/Weapon.ts";
 
 export default class Enemy extends Entity {
-    private readonly _bulletData: BulletData = {
+    protected _bulletData: BulletData = {
         width: 12,
         height: 12,
         color: 0xf25f5c,
         speed: 512,
         damage: 1,
+        shots: 1,
+        angle: 0
     };
     private _shootTimerConfig: Phaser.Types.Time.TimerEventConfig;
     private _shootTimer: Phaser.Time.TimerEvent;
@@ -93,7 +95,6 @@ export default class Enemy extends Entity {
         this.play(`${this._frameName}-shoot`);
         this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
             this.setTexture('sprites', this._frameName);
-
             this.getComponent(Weapon)?.shoot(this);
             this.scene.sound.play('sfx_laser2');
         });
