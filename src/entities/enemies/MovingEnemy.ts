@@ -7,8 +7,8 @@ export class MovingEnemy extends Enemy {
     private _offset: number = 65;
 
     init(bulletsGroup: Phaser.Physics.Arcade.Group) {
-        this._bulletData.shots = 20;
-        this._bulletData.angle = 90;
+        this._bulletData.shots = 3;
+        this._bulletData.angle = 45;
         this._speed = 0.15;
         super.init(bulletsGroup);
         console.log(this._bulletData)

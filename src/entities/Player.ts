@@ -13,7 +13,7 @@ export default class Player extends Entity {
         color: 0xffe066,
         speed: 200,
         damage: 1,
-        shots: 10,
+        shots: 3,
         angle: 90
     };
 

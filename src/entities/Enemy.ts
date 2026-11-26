@@ -18,7 +18,7 @@ export default class Enemy extends Entity {
     private _shootTimer: Phaser.Time.TimerEvent;
     protected _healthValue: number = 1;
     protected _speed: number = 0.2;
-    private _frameName: string;
+    protected _frameName: string;
 
     public init(bulletsGroup: Phaser.Physics.Arcade.Group) {
         this.addComponent(new Health(this._healthValue, this));
