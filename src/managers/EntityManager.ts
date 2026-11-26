@@ -68,7 +68,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
             delay: 1500,
             callback: this.spawnEnemy,
             callbackScope: this,
-            loop: true
+            loop: true,
         });
 
         console.log("[EntityManager] Enemies initialized");
