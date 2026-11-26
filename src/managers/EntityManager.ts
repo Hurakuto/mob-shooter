@@ -59,7 +59,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
         GroupUtils.populate(256, this._enemyBullets);
 
         this._enemyGroups = [
-            this.createEnemyGroup(BasicEnemy, 'ufored'),
+            this.createEnemyGroup(BasicEnemy, 'ufoRed'),
             this.createEnemyGroup(MovingEnemy, 'playerShip2_blue')
         ];
 
