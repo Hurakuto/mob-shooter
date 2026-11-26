@@ -1,14 +1,18 @@
 import Enemy from "../Enemy.ts";
 import Movement from "../../components/Movement.ts";
+import { MovingEnemyData } from "../../gameData/MovingEnemyData.ts";
 
 export class MovingEnemy extends Enemy {
   private _direction: number = 1;
-  private _horizontalFactor: number = 1.5;
+  private _horizontalFactor: number;
   private _offset: number = 65;
 
   init(bulletsGroup: Phaser.Physics.Arcade.Group) {
-    this._bulletData.shots = 3;
-    this._bulletData.angle = 45;
+    const movingEnemyData = this.scene.cache.json.get('movingEnemy') as MovingEnemyData;
+
+    this._bulletData.shots = movingEnemyData.spreadShot.shots;
+    this._bulletData.angle = movingEnemyData.spreadShot.angle;
+    this._horizontalFactor = movingEnemyData.horizontalSpeed;
     this._speed = 0.15;
     super.init(bulletsGroup);
   }
