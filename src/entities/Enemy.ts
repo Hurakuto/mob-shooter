@@ -16,11 +16,14 @@ export default class Enemy extends Entity {
     private _shootTimer: Phaser.Time.TimerEvent;
     protected _healthValue: number = 1;
     protected _speed: number = 0.2;
+    private _frameName: string;
 
     public init(bulletsGroup: Phaser.Physics.Arcade.Group) {
         this.addComponent(new Health(this._healthValue, this));
         this.addComponent(new Movement(this._speed));
         this.addComponent(new Weapon(bulletsGroup, this._bulletData));
+
+        this._frameName = this.frame.name;
 
         // Listen once per enemy, not on every enable(): pooled enemies are reused many times
         const health = this.getComponent(Health);
@@ -53,13 +56,14 @@ export default class Enemy extends Entity {
         this._shootTimer = this.scene.time.addEvent(this._shootTimerConfig);
 
         // Create animation when enemy is about to shoot in the global animation manager
-        if (!this.scene.anims.exists('ufoShoot')) {
+        const shootAnimKey = `${this._frameName}-shoot`;
+        if (!this.scene.anims.exists(shootAnimKey)) {
             this.scene.anims.create({
-                key: 'ufoShoot',
+                key: shootAnimKey,
                 frames: [
-                    {key: 'sprites', frame: 'ufoRed'},
-                    {key: 'sprites', frame: 'ufoRed-shoot0'},
-                    {key: 'sprites', frame: 'ufoRed-shoot1'}
+                    {key: 'sprites', frame: this._frameName},
+                    {key: 'sprites', frame: `${this._frameName}-shoot0`},
+                    {key: 'sprites', frame: `${this._frameName}-shoot1`}
                 ],
                 frameRate: 4,
             });
@@ -86,9 +90,9 @@ export default class Enemy extends Entity {
     }
 
     private shoot() {
-        this.play('ufoShoot');
+        this.play(`${this._frameName}-shoot`);
         this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-            this.setTexture('sprites', 'ufoRed');
+            this.setTexture('sprites', this._frameName);
 
             this.getComponent(Weapon)?.shoot(this);
             this.scene.sound.play('sfx_laser2');
