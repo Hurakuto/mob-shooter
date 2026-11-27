@@ -1,4 +1,4 @@
-import {GameObjects, Plugins, Physics, Scene} from "phaser";
+import { GameObjects, Plugins, Physics, Scene } from "phaser";
 import Health from "../components/Health.ts";
 import Bullet from "../entities/Bullet.ts";
 import Enemy from "../entities/Enemy.ts";
@@ -11,10 +11,8 @@ import { ShooterEnemy } from "../entities/enemies/ShooterEnemy.ts";
 import { BossEnemy } from "../entities/enemies/BossEnemy.ts";
 
 export default class EntityManager extends Plugins.ScenePlugin {
-    public static readonly PLUGIN_KEY: string = 'EntityManager';
-    public static readonly MAPPING_NAME: string = 'entityManager';
-
-    private _enemyTypes = 
+  
+  private _enemyTypes = 
     [
         { classType: BasicEnemy,  frame: "playerShip2_blue", dataKey: "basicEnemy", type: "regular" },
         { classType: ShooterEnemy, frame: "ufoRed", dataKey: "shooterEnemy", type: "regular" },
@@ -39,18 +37,85 @@ export default class EntityManager extends Plugins.ScenePlugin {
     private _bossGroups: Physics.Arcade.Group[];
     private _enemyBullets: Physics.Arcade.Group;
     private _spawnOffset: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
+    public static readonly PLUGIN_KEY: string = "EntityManager";
+    public static readonly MAPPING_NAME: string = "entityManager";
 
-    constructor(scene: Scene, pluginManager: Plugins.PluginManager) {
-        super(scene, pluginManager, EntityManager.PLUGIN_KEY);
+  constructor(scene: Scene, pluginManager: Plugins.PluginManager) {
+    super(scene, pluginManager, EntityManager.PLUGIN_KEY);
 
-        console.log("[EntityManager] Initialized");
-    }
+    console.log("[EntityManager] Initialized");
+  }
 
-    destroy() {
-        super.destroy();
+  destroy() {
+    super.destroy();
 
-        console.log("[EntityManager] Destroyed");
-    }
+    console.log("[EntityManager] Destroyed");
+  }
+
+  // Spawn power-ups at random positions around the player, but within the arena bounds - MAXIME
+  private spawnPowerUp() {
+    const powerUpTypes = [
+      { type: "speed", texture: "powerup-speed" },
+      { type: "fireRate", texture: "powerup-fire-rate" },
+      { type: "bulkShot", texture: "powerup-bulk-shot" },
+      { type: "health", texture: "powerup-health" },
+    ];
+
+    const powerUp = Phaser.Math.Between(0, powerUpTypes.length - 1);
+
+    const margin = 32;
+    const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+    const distance = Phaser.Math.Between(100, 300);
+
+    const x = Phaser.Math.Clamp(
+      this._player.x + Math.cos(angle) * distance,
+      margin,
+      GameConstants.ARENA_WIDTH - margin,
+    );
+    const y = Phaser.Math.Clamp(
+      this._player.y + Math.sin(angle) * distance,
+      margin,
+      GameConstants.ARENA_HEIGHT - margin,
+    );
+
+    const box = this.scene!.physics.add
+      .staticImage(
+        x,
+        y,
+        powerUpTypes[powerUp].texture,
+      )
+      .setDisplaySize(64, 64);
+    box.refreshBody();
+
+    const type = powerUpTypes[powerUp].type;
+
+    const overlap = this.scene!.physics.add.overlap(this._player, box, () => {
+      overlap.destroy();
+      box.destroy();
+      console.log(
+        `[EntityManager] Player collected ${powerUpTypes[powerUp].type}`,
+      );
+      if (type === "bulkShot") {
+        this._player.fireBulkShot();
+      } else if (type === "speed") {
+        this._player.applySpeedBoost();
+      } else if (type === "health") {
+        const health = this._player.getComponent(Health);
+
+        if (!health) {
+          console.error("[EntityManager] Player Health component not found");
+          return;
+        }
+
+        health.heal(1);
+      } else if (type === "fireRate") {
+        this._player.applyFireRateBoost();
+      }
+    });
+
+    console.log(`[EntityManager] Power-up spawned at (${x}, ${y})`);
+  }
+}
 
     public initAndSpawnPlayer(): Player {
         this._playerBullets = this.scene!.physics.add.group(this.bulletGroupConfig);
@@ -95,6 +160,14 @@ export default class EntityManager extends Plugins.ScenePlugin {
             callbackScope: this,
             loop: true
         });
+      
+       // Spawn power-ups
+    this.scene!.time.addEvent({
+      delay: 10000,
+      callback: this.spawnPowerUp,
+      callbackScope: this,
+      loop: true,
+    });
 
         console.log("[EntityManager] Enemies initialized");
 
