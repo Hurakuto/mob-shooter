@@ -4,8 +4,8 @@ import Entity from "../Entity.ts";
 export class BasicEnemy extends Enemy {
    
     public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity) {
-        this._healthValue = 2;
-        this._speed = 0.15;
+        this._healthValue = 1;
+        this._speed = 0.3;
 
         super.init(bulletsGroup, target);
     }
