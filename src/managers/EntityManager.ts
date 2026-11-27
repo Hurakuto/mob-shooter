@@ -18,7 +18,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
     [
         { classType: BasicEnemy,  frame: "playerShip2_blue", dataKey: "basicEnemy", type: "regular" },
         { classType: ShooterEnemy, frame: "ufoRed", dataKey: "shooterEnemy", type: "regular" },
-        { classType: BossEnemy, frame: "playerShip1_blue", dataKey: "bossEnemy", type: "boss" }
+        { classType: BossEnemy, frame: "bossEnemy", dataKey: "bossEnemy", type: "boss" }
     ];
     private _scoreBoss: number = 50;
 
@@ -60,6 +60,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
         this._player.init(this._playerBullets);
 
         console.log("[EntityManager] Player spawned");
+        this._scoreBoss = 50;
 
         this.game!.events.emit(GameConstants.Events.PLAYER_SPAWNED_EVENT, this._player);
 
@@ -174,7 +175,6 @@ export default class EntityManager extends Plugins.ScenePlugin {
     }
 
     private spawnEnemy() {
-        console.log(Enemy.kills, this._scoreBoss)
         if (Enemy.kills >= this._scoreBoss) {
             this._scoreBoss += 20;
             this.spawnBoss();
