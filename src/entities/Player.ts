@@ -17,6 +17,8 @@ export default class Player extends Entity {
     color: 0xffe066,
     speed: 1024,
     damage: 1,
+    shots: 1,
+    angle: 0
   };
 
   private readonly _cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -24,6 +26,7 @@ export default class Player extends Entity {
   private _rateOfFire: number;
   private _fireRateMultiplier: number = 1;
   private _fireRateBoostTimer?: Phaser.Time.TimerEvent;
+  private _rateOfFire: number;
   private _lastShotTime: number;
   private readonly _moveDirection: Phaser.Math.Vector2 =
     new Phaser.Math.Vector2();
