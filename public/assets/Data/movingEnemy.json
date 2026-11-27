@@ -1,9 +1,0 @@
-{
-    "spawnRate": 1,
-    "horizontalSpeed": 1.5,
-    "spreadShot": 
-    {
-        "angle": 45,
-        "shots": 3
-    }
-}

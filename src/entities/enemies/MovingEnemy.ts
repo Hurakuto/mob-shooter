@@ -8,11 +8,12 @@ export class MovingEnemy extends Enemy {
   private _offset: number = 65;
 
   init(bulletsGroup: Phaser.Physics.Arcade.Group) {
-    const movingEnemyData = this.scene.cache.json.get('movingEnemy') as MovingEnemyData;
+    const movingEnemyData = this.scene.cache.json.get('enemies').movingEnemy as MovingEnemyData;
 
     this._bulletData.shots = movingEnemyData.spreadShot.shots;
     this._bulletData.angle = movingEnemyData.spreadShot.angle;
     this._horizontalFactor = movingEnemyData.horizontalSpeed;
+
     this._speed = 0.15;
     super.init(bulletsGroup);
   }
