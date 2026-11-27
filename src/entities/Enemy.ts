@@ -5,13 +5,14 @@ import Movement from "../components/Movement.ts";
 import Weapon from "../components/Weapon.ts";
 
 export default class Enemy extends Entity {
-    private _bulletDamage: number = 1;
-    private readonly _bulletData: BulletData = {
+    protected readonly _bulletData: BulletData = {
         width: 12,
         height: 12,
         color: 0xf25f5c,
         speed: 512,
-        damage: this._bulletDamage,
+        damage: 1,
+        shots: 1,
+        angle: 0
     };
     private _shootTimerConfig: Phaser.Types.Time.TimerEventConfig;
     private _shootTimer: Phaser.Time.TimerEvent;
@@ -22,6 +23,7 @@ export default class Enemy extends Entity {
     private readonly _directionToTarget: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
     protected _frameName: string;
     protected _canShoot: boolean = false;
+    public static kills: number = 0;
 
     public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity) {
         this._target = target;
@@ -67,16 +69,19 @@ export default class Enemy extends Entity {
         // Create animation when enemy is about to shoot in the global animation manager
         if (this._canShoot) {
             const shootAnimKey = `${this._frameName}-shoot`;
-            if (!this.scene.anims.exists(shootAnimKey)) {
-                this.scene.anims.create({
-                    key: shootAnimKey,
-                    frames: [
-                        {key: 'sprites', frame: this._frameName},
-                        {key: 'sprites', frame: `${this._frameName}-shoot0`},
-                        {key: 'sprites', frame: `${this._frameName}-shoot1`}
-                    ],
-                    frameRate: 4,
-                });
+            const texture = this.scene.textures.get('sprites');
+            if (texture?.has(`${this._frameName}-shoot0`) && texture?.has(`${this._frameName}-shoot1`)) {
+                if (!this.scene.anims.exists(shootAnimKey)) {
+                    this.scene.anims.create({
+                        key: shootAnimKey,
+                        frames: [
+                            {key: 'sprites', frame: this._frameName},
+                            {key: 'sprites', frame: `${this._frameName}-shoot0`},
+                            {key: 'sprites', frame: `${this._frameName}-shoot1`}
+                        ],
+                        frameRate: 4,
+                    });
+                }
             }
         }
 
@@ -93,6 +98,7 @@ export default class Enemy extends Entity {
     }
 
     public disable() {
+        Enemy.kills++;
         this.stop();
         this.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
 
@@ -103,13 +109,19 @@ export default class Enemy extends Entity {
     }
 
     private shoot() {
-        this.play(`${this._frameName}-shoot`);
-        this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-            this.setTexture('sprites', this._frameName);
+        const shootAnimKey = `${this._frameName}-shoot`;
+        if (this.scene.anims.exists(shootAnimKey)) {
+            this.play(shootAnimKey);
+            this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+                this.setTexture('sprites', this._frameName);
 
+                this.getComponent(Weapon)?.shoot(this);
+                this.scene.sound.play('sfx_laser2');
+            });
+        } else {
             this.getComponent(Weapon)?.shoot(this);
             this.scene.sound.play('sfx_laser2');
-        });
+        }
     }
 
     preUpdate(timeSinceLaunch: number, deltaTime: number) {

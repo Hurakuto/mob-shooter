@@ -8,6 +8,7 @@ import GameConstants from "../GameConstants.ts";
 import RegistryConstants from "../RegistryConstants.ts";
 import { BasicEnemy } from "../entities/enemies/BasicEnemy.ts";
 import { ShooterEnemy } from "../entities/enemies/ShooterEnemy.ts";
+import { BossEnemy } from "../entities/enemies/BossEnemy.ts";
 
 export default class EntityManager extends Plugins.ScenePlugin {
     public static readonly PLUGIN_KEY: string = 'EntityManager';
@@ -15,9 +16,11 @@ export default class EntityManager extends Plugins.ScenePlugin {
 
     private _enemyTypes = 
     [
-        { classType: BasicEnemy,  frame: "playerShip2_blue", dataKey: "basicEnemy" },
-        { classType: ShooterEnemy, frame: "ufoRed", dataKey: "shooterEnemy" }
+        { classType: BasicEnemy,  frame: "playerShip2_blue", dataKey: "basicEnemy", type: "regular" },
+        { classType: ShooterEnemy, frame: "ufoRed", dataKey: "shooterEnemy", type: "regular" },
+        { classType: BossEnemy, frame: "playerShip1_blue", dataKey: "bossEnemy", type: "boss" }
     ];
+    private _scoreBoss: number = 50;
 
     // noinspection JSUnusedGlobalSymbols
     private readonly bulletGroupConfig = {
@@ -32,6 +35,8 @@ export default class EntityManager extends Plugins.ScenePlugin {
     private _player: Player;
     private _playerBullets: Physics.Arcade.Group;
     private _enemyGroups: Physics.Arcade.Group[];
+    private _regularGroups: Physics.Arcade.Group[];
+    private _bossGroups: Physics.Arcade.Group[];
     private _enemyBullets: Physics.Arcade.Group;
     private _spawnOffset: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
 
@@ -62,12 +67,23 @@ export default class EntityManager extends Plugins.ScenePlugin {
     }
 
     public initEnemies(): Physics.Arcade.Group[] {
+        Enemy.kills = 0;
+
         this._enemyBullets = this.scene!.physics.add.group(this.bulletGroupConfig);
         GroupUtils.populate(256, this._enemyBullets);
 
-        this._enemyGroups = this._enemyTypes.map((type) => 
-            this.createEnemyGroup(type.classType, type.frame)
-        );
+        const groupEntries = this._enemyTypes.map((type) => ({
+            type,
+            group: this.createEnemyGroup(type.classType, type.frame)
+        }));
+
+        this._enemyGroups = groupEntries.map((e) => e.group);
+        this._regularGroups = groupEntries
+            .filter((e) => e.type.type !== "boss")
+            .map((e) => e.group);
+        this._bossGroups = groupEntries
+            .filter((e) => e.type.type === "boss")
+            .map((e) => e.group);
 
         this._player.setTargets(this._enemyGroups);
 
@@ -122,21 +138,7 @@ export default class EntityManager extends Plugins.ScenePlugin {
         console.log("[EntityManager] Group collisions initialized");
     }
 
-    private spawnEnemy() {
-        const total = this._enemyGroups.reduce(
-            (sum, group) => sum + group.countActive(true),
-            0,
-        );
-
-        if (total >= 50) {
-            return;
-        }
-
-        const group = this.pickEnemyGroup();
-        if(!group){
-            return;
-        }
-
+    private spawnFromGroup(group: Physics.Arcade.Group) {
         const enemy = group.get() as Enemy;
         if (!enemy) {
             return;
@@ -150,6 +152,49 @@ export default class EntityManager extends Plugins.ScenePlugin {
         enemy.enable(view.centerX + this._spawnOffset.x, view.centerY + this._spawnOffset.y);
 
         this.game!.events.emit(GameConstants.Events.ENEMY_SPAWNED_EVENT, enemy);
+    }
+
+    private spawnBoss() {
+        const total = this._bossGroups.reduce(
+            (sum, group) => sum + group.countActive(true),
+            0,
+        );
+
+        if (total >= 1) {
+            return;
+        }
+
+        const bossGroup = this.pickBossGroup();
+        if (!bossGroup) {
+            return;
+        }
+
+        this.spawnFromGroup(bossGroup);
+        console.log("[EntityManager] Boss spawned");
+    }
+
+    private spawnEnemy() {
+        console.log(Enemy.kills, this._scoreBoss)
+        if (Enemy.kills >= this._scoreBoss) {
+            this._scoreBoss += 20;
+            this.spawnBoss();
+        }
+
+        const total = this._enemyGroups.reduce(
+            (sum, group) => sum + group.countActive(true),
+            0,
+        );
+
+        if (total >= 50) {
+            return;
+        }
+
+        const group = this.pickEnemyGroup();
+        if (!group) {
+            return;
+        }
+
+        this.spawnFromGroup(group);
 
         console.log("[EntityManager] Enemy spawned");
     }
@@ -166,9 +211,24 @@ export default class EntityManager extends Plugins.ScenePlugin {
     }
 
     private pickEnemyGroup(): Physics.Arcade.Group | undefined {
-        const rates: number[] = this._enemyTypes.map((type) => this.scene!.cache.json.get('enemies')?.[type.dataKey]?.spawnRate ?? 1)
+        const regularTypes = this._enemyTypes.filter((type) => type.type !== "boss");
+        const rates: number[] = regularTypes.map((type) => this.scene!.cache.json.get('enemies')?.[type.dataKey]?.spawnRate ?? 1);
         let roll = Math.random() * rates.reduce((sum, rate) => sum + rate, 0);
 
-        return this._enemyGroups.find((_, i) => (roll -= rates[i]) < 0);
+        const index = regularTypes.findIndex((_, i) => (roll -= rates[i]) < 0);
+        return index !== -1 ? this._regularGroups[index] : undefined;
+    }
+
+    private pickBossGroup(): Physics.Arcade.Group | undefined {
+        const bossTypes = this._enemyTypes.filter((type) => type.type === "boss");
+        if (bossTypes.length === 0) {
+            return undefined;
+        }
+
+        const rates: number[] = bossTypes.map((type) => this.scene!.cache.json.get('enemies')?.[type.dataKey]?.spawnRate ?? 1);
+        let roll = Math.random() * rates.reduce((sum, rate) => sum + rate, 0);
+
+        const index = bossTypes.findIndex((_, i) => (roll -= rates[i]) < 0);
+        return index !== -1 ? this._bossGroups[index] : undefined;
     }
 }
