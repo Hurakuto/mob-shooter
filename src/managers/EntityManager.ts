@@ -115,7 +115,6 @@ export default class EntityManager extends Plugins.ScenePlugin {
 
     console.log(`[EntityManager] Power-up spawned at (${x}, ${y})`);
   }
-}
 
     public initAndSpawnPlayer(): Player {
         this._playerBullets = this.scene!.physics.add.group(this.bulletGroupConfig);

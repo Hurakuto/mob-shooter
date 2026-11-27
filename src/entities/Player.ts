@@ -26,7 +26,6 @@ export default class Player extends Entity {
   private _rateOfFire: number;
   private _fireRateMultiplier: number = 1;
   private _fireRateBoostTimer?: Phaser.Time.TimerEvent;
-  private _rateOfFire: number;
   private _lastShotTime: number;
   private readonly _moveDirection: Phaser.Math.Vector2 =
     new Phaser.Math.Vector2();
