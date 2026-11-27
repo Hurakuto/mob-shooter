@@ -14,21 +14,24 @@ export default class Enemy extends Entity {
         damage: this._bulletDamage,
     };
     private _shootTimerConfig: Phaser.Types.Time.TimerEventConfig;
-    private _shootTimer: Phaser.Time.TimerEvent | undefined;
+    private _shootTimer: Phaser.Time.TimerEvent;
     protected _target: Entity;
     protected _health: Health | undefined;
     protected _healthValue: number;
     protected _speed: number;
     private readonly _directionToTarget: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
+    protected _frameName: string;
+    protected _canShoot: boolean = false;
 
     public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity) {
         this._target = target;
+        this._frameName = this.frame.name;
 
         this.addComponent(new Health(this._healthValue, this));
         this.addComponent(new Movement(this._speed));
         this.addComponent(new Weapon(bulletsGroup, this._bulletData));
         // Chasers don't shoot for now
-        this.getComponent(Weapon)!.enabled = false;
+        this.getComponent(Weapon)!.enabled = this._canShoot;
 
         // Listen once per enemy, not on every enable(): pooled enemies are reused many times
         this._health = this.getComponent(Health);
@@ -62,16 +65,19 @@ export default class Enemy extends Entity {
         }
 
         // Create animation when enemy is about to shoot in the global animation manager
-        if (!this.scene.anims.exists('ufoShoot')) {
-            this.scene.anims.create({
-                key: 'ufoShoot',
-                frames: [
-                    {key: 'sprites', frame: 'ufoRed'},
-                    {key: 'sprites', frame: 'ufoRed-shoot0'},
-                    {key: 'sprites', frame: 'ufoRed-shoot1'}
-                ],
-                frameRate: 4,
-            });
+        if (this._canShoot) {
+            const shootAnimKey = `${this._frameName}-shoot`;
+            if (!this.scene.anims.exists(shootAnimKey)) {
+                this.scene.anims.create({
+                    key: shootAnimKey,
+                    frames: [
+                        {key: 'sprites', frame: this._frameName},
+                        {key: 'sprites', frame: `${this._frameName}-shoot0`},
+                        {key: 'sprites', frame: `${this._frameName}-shoot1`}
+                    ],
+                    frameRate: 4,
+                });
+            }
         }
 
         this.arcadeBody.setCircle(this.displayWidth / 2);
@@ -91,14 +97,15 @@ export default class Enemy extends Entity {
         this.removeAllListeners(Phaser.Animations.Events.ANIMATION_COMPLETE);
 
         this.disableBody(true, true);
-        if (this._shootTimer)
+        if (this._shootTimer) {
             this._shootTimer.paused = true;
+        }
     }
 
     private shoot() {
-        this.play('ufoShoot');
+        this.play(`${this._frameName}-shoot`);
         this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-            this.setTexture('sprites', 'ufoRed');
+            this.setTexture('sprites', this._frameName);
 
             this.getComponent(Weapon)?.shoot(this);
             this.scene.sound.play('sfx_laser2');
