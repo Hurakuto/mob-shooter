@@ -33,6 +33,10 @@ export default class HomeScene extends Phaser.Scene {
         this.load.image('bg', 'Backgrounds/darkPurple.png');
         this.load.image('planet', 'Planets/planet00.png');
         this.load.atlas('sprites', 'Spritesheet/gameSprites.png', 'Spritesheet/gameSprites.json');
+        this.load.image('powerup-speed', 'PowerUps/speed.png');
+        this.load.image('powerup-fire-rate', 'PowerUps/fireRate.png');
+        this.load.image('powerup-bulk-shot', 'PowerUps/bulkShot.png');
+        this.load.image('powerup-health', 'PowerUps/health.png');
         this.load.bitmapFont('future-bmp', 'Fonts/kenvector_future.png', 'Fonts/kenvector_future.xml');
         this.load.font('future', 'Fonts/kenvector_future.ttf');
         this.load.json('playerShips', 'Data/playerShips.json');
