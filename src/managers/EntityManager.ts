@@ -220,9 +220,10 @@ export default class EntityManager extends Plugins.ScenePlugin {
   // Spawn power-ups at random positions around the player, but within the arena bounds - MAXIME
   private spawnPowerUp() {
     const powerUpTypes = [
-      { type: "speed", color: 0x00aaff },
-      { type: "fireRate", color: 0xff5533 },
-      { type: "bulkShot", color: 0xbb66ff },
+      { type: "speed", texture: "powerup-speed" },
+      { type: "fireRate", texture: "powerup-fire-rate" },
+      { type: "bulkShot", texture: "powerup-bulk-shot" },
+      { type: "health", texture: "powerup-health" },
     ];
 
     const powerUp = Phaser.Math.Between(0, powerUpTypes.length - 1);
@@ -242,15 +243,14 @@ export default class EntityManager extends Plugins.ScenePlugin {
       GameConstants.ARENA_HEIGHT - margin,
     );
 
-    const box = this.scene!.add.rectangle(
-      x,
-      y,
-      32,
-      32,
-      powerUpTypes[powerUp].color,
-    ).setStrokeStyle(3, 0xffffff);
-
-    this.scene!.physics.add.existing(box, true);
+    const box = this.scene!.physics.add
+      .staticImage(
+        x,
+        y,
+        powerUpTypes[powerUp].texture,
+      )
+      .setDisplaySize(64, 64);
+    box.refreshBody();
 
     const type = powerUpTypes[powerUp].type;
 
@@ -262,6 +262,19 @@ export default class EntityManager extends Plugins.ScenePlugin {
       );
       if (type === "bulkShot") {
         this._player.fireBulkShot();
+      } else if (type === "speed") {
+        this._player.applySpeedBoost();
+      } else if (type === "health") {
+        const health = this._player.getComponent(Health);
+
+        if (!health) {
+          console.error("[EntityManager] Player Health component not found");
+          return;
+        }
+
+        health.heal(1);
+      } else if (type === "fireRate") {
+        this._player.applyFireRateBoost();
       }
     });
 

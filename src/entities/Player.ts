@@ -22,6 +22,8 @@ export default class Player extends Entity {
   private readonly _cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
   private _playerShipData: PlayerShipData;
   private _rateOfFire: number;
+  private _fireRateMultiplier: number = 1;
+  private _fireRateBoostTimer?: Phaser.Time.TimerEvent;
   private _lastShotTime: number;
   private readonly _moveDirection: Phaser.Math.Vector2 =
     new Phaser.Math.Vector2();
@@ -117,7 +119,10 @@ export default class Player extends Entity {
     );
 
     // Shoot automatically at the nearest enemy
-    if (timeSinceLaunch - this._lastShotTime > this._rateOfFire * 1000) {
+    if (
+      timeSinceLaunch - this._lastShotTime >
+      (this._rateOfFire / this._fireRateMultiplier) * 1000
+    ) {
       const nearestTarget = this.findNearestTarget();
       if (nearestTarget) {
         this._shootDirection
@@ -154,5 +159,49 @@ export default class Player extends Entity {
   public fireBulkShot() {
     this.getComponent(Weapon)?.shootRadially(this);
     this.scene.sound.play("sfx_laser1");
+  }
+
+  private _speedBoostTimer?: Phaser.Time.TimerEvent;
+  private _speedBoostOriginalZoom?: number;
+
+  public applySpeedBoost() {
+    const movement = this.getComponent(Movement);
+    if (!movement) {
+      console.error("[Player] Movement component not found");
+      return;
+    }
+
+    const camera = this.scene.cameras.main;
+    this._speedBoostOriginalZoom ??= camera.zoom;
+    camera.zoomTo(
+      this._speedBoostOriginalZoom * 0.85,
+      300,
+      "Sine.easeInOut",
+      true,
+    );
+
+    movement.setSpeedMultriplier(1.5);
+    this._speedBoostTimer?.remove(false);
+
+    this._speedBoostTimer = this.scene.time.delayedCall(5000, () => {
+      movement.setSpeedMultriplier(1);
+
+      const originalZoom = this._speedBoostOriginalZoom;
+      if (originalZoom !== undefined) {
+        camera.zoomTo(originalZoom, 300, "Sine.easeInOut", true);
+      }
+
+      this._speedBoostTimer = undefined;
+    });
+  }
+
+  public applyFireRateBoost() {
+    this._fireRateMultiplier = 2;
+    this._fireRateBoostTimer?.remove(false);
+
+    this._fireRateBoostTimer = this.scene.time.delayedCall(5000, () => {
+      this._fireRateMultiplier = 1;
+      this._fireRateBoostTimer = undefined;
+    });
   }
 }
