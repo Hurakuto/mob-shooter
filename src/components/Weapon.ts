@@ -37,7 +37,6 @@ export default class Weapon implements IComponent {
                 const sourceForward: Phaser.Math.Vector2 = new Phaser.Math.Vector2(1, 0).rotate(source.rotation + Phaser.Math.DegToRad(offset));
                 const bulletVelocity: Phaser.Math.Vector2 = sourceForward.clone().scale(this._bulletData.speed);
                 bullet.enable(source.x + sourceForward.x * source.arcadeBody.radius, source.y + sourceForward.y * source.arcadeBody.radius,bulletVelocity.x, bulletVelocity.y, this._bulletData);
-                console.log(offset)
 
                 // Maths way
                 // const forwardVectorX: number = Math.cos(source.rotation);

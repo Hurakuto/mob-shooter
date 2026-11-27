@@ -11,7 +11,7 @@ export default class Player extends Entity {
         width: 12,
         height: 4,
         color: 0xffe066,
-        speed: 200,
+        speed: 1024,
         damage: 1,
         shots: 3,
         angle: 90
