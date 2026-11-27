@@ -2,7 +2,7 @@ import Enemy from "../Enemy.ts";
 import Entity from "../Entity.ts";
 
 
-class BasicEnemy extends Enemy {
+export class BasicEnemy extends Enemy {
     
     public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity) {
         this._healthValue = 1;

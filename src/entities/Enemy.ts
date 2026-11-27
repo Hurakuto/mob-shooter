@@ -20,9 +20,11 @@ export default class Enemy extends Entity {
     protected _healthValue: number;
     protected _speed: number;
     private readonly _directionToTarget: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
+    protected _frameName: string;
 
     public init(bulletsGroup: Phaser.Physics.Arcade.Group, target: Entity) {
         this._target = target;
+        this._frameName = this.frame.name;
 
         this.addComponent(new Health(this._healthValue, this));
         this.addComponent(new Movement(this._speed));
@@ -62,13 +64,13 @@ export default class Enemy extends Entity {
         }
 
         // Create animation when enemy is about to shoot in the global animation manager
-        if (!this.scene.anims.exists('ufoShoot')) {
+        if (!this.scene.anims.exists(this._frameName)) {
             this.scene.anims.create({
-                key: 'ufoShoot',
+                key: this._frameName,
                 frames: [
-                    {key: 'sprites', frame: 'ufoRed'},
-                    {key: 'sprites', frame: 'ufoRed-shoot0'},
-                    {key: 'sprites', frame: 'ufoRed-shoot1'}
+                    {key: 'sprites', frame: this._frameName},
+                    {key: 'sprites', frame: `${this._frameName}-shoot0`},
+                    {key: 'sprites', frame: `${this._frameName}-shoot1`}
                 ],
                 frameRate: 4,
             });
