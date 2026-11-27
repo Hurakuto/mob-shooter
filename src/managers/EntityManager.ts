@@ -13,6 +13,11 @@ export default class EntityManager extends Plugins.ScenePlugin {
   public static readonly PLUGIN_KEY: string = "EntityManager";
   public static readonly MAPPING_NAME: string = "entityManager";
 
+  private readonly _enemyTypes = [
+    { classType: BasicEnemy, frame: "ufoRed", dataKey: "basicEnemy" },
+    { classType: MovingEnemy, frame: "movingEnemy", dataKey: "movingEnemy" }
+  ]
+
   // noinspection JSUnusedGlobalSymbols
   private readonly bulletGroupConfig = {
     classType: Bullet,
@@ -65,10 +70,9 @@ export default class EntityManager extends Plugins.ScenePlugin {
     this._enemyBullets = this.scene!.physics.add.group(this.bulletGroupConfig);
     GroupUtils.populate(256, this._enemyBullets);
 
-    this._enemyGroups = [
-      this.createEnemyGroup(BasicEnemy, "ufoRed"),
-      this.createEnemyGroup(MovingEnemy, "movingEnemy"),
-    ];
+    this._enemyGroups = this._enemyTypes.map((type) => 
+      this.createEnemyGroup(type.classType, type.frame)
+    );
 
     // Spawn enemies indefinitely
     this.scene!.time.addEvent({
@@ -151,8 +155,10 @@ export default class EntityManager extends Plugins.ScenePlugin {
       return;
     }
 
-    const group =
-      this._enemyGroups[Phaser.Math.Between(0, this._enemyGroups.length - 1)];
+    const group = this.pickEnemyGroup();
+    if(!group){
+      return;
+    }
 
     const enemy = group.get() as Enemy;
     if (!enemy) {
@@ -167,5 +173,12 @@ export default class EntityManager extends Plugins.ScenePlugin {
     this.game!.events.emit(GameConstants.Events.ENEMY_SPAWNED_EVENT, enemy);
 
     console.log("[EntityManager] Enemy spawned");
+  }
+
+  private pickEnemyGroup(): Physics.Arcade.Group | undefined {
+    const rates: number[] = this._enemyTypes.map((type) => this.scene!.cache.json.get('enemies')?.[type.dataKey]?.spawnRate ?? 1)
+    let roll = Math.random() * rates.reduce((sum, rate) => sum + rate, 0);
+
+    return this._enemyGroups.find((_, i) => (roll -= rates[i]) < 0);
   }
 }
